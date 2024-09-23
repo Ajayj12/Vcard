@@ -1,15 +1,14 @@
 package com.Client.VCard.Entity;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,16 +20,18 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "V_purchase")
-public class Purchases {
+@Table(name = "V_bankDetails")
+public class BankDetails {
 
 	@Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
-	private Double amount;
+	private String vpaId;
+	
+	@ManyToOne
+	@JoinColumn(name = "associate_id" ,referencedColumnName = "associateId")
+	private EmployeeEntity employee;
 	
 	
-	@OneToMany(mappedBy = "purchase" ,cascade = CascadeType.ALL)
-	private List<MTransaction> transactions;
 }

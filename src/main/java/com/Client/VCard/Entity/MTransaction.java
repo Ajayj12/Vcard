@@ -2,7 +2,11 @@ package com.Client.VCard.Entity;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -19,14 +23,17 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "V_transaction")
-public class Transaction {
+@Table(name = "V_Mtransaction")
+public class MTransaction {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	private String transactionType;
 	
-	private String status;
+	@JsonIgnore
+	@Enumerated(EnumType.STRING)
+	private TransactionType transactionType;
+	@Enumerated(EnumType.STRING)
+	private Status status;
 	
 	private Double cost;
 	
@@ -36,7 +43,7 @@ public class Transaction {
 	@JoinColumn(name = "card_id")
 	private CardEntity card;
 	
-	
+	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "purchase_id")
 	private Purchases purchase;

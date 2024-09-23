@@ -39,6 +39,8 @@ public class CardEntity {
 	
 	private Integer cardNumber;
 	private Integer rewardLimits;
+	
+	private Integer balance;
 	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "card_type_id")
@@ -60,7 +62,7 @@ public class CardEntity {
 	
 	@JsonIgnore
 	@OneToMany(mappedBy = "card" , cascade = CascadeType.ALL )
-	private List<Transaction> transactions;
+	private List<MTransaction> transactions;
 	
 	
 	public void setPin(int pin) {

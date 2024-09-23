@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Client.VCard.DTO.CardDto;
 import com.Client.VCard.DTO.EmployeeDto;
+import com.Client.VCard.DTO.TransactionDto;
+import com.Client.VCard.Entity.BankDetails;
 import com.Client.VCard.Entity.CardEntity;
 import com.Client.VCard.Entity.EmployeeEntity;
+import com.Client.VCard.Entity.MTransaction;
 import com.Client.VCard.Exception.CustomRunTimeException;
 import com.Client.VCard.Repository.CardRepository;
 import com.Client.VCard.Service.CardService;
@@ -47,6 +50,29 @@ public class EmployeeController {
 		
 		 
 		
+	}
+	
+	@PostMapping("vpa")
+	public BankDetails setVpa(@RequestBody EmployeeDto employeeDTO) {
+		EmployeeEntity employee = employeeDTO.getEmployee();
+		if (employee.getAssociateId() == null) {
+	        throw new CustomRunTimeException("Associate ID is required");
+	    }
+		BankDetails bank = employeeService.setVpa(employeeDTO.getAssociateId());
+		
+		return bank;
+		
+	}
+	
+	@PostMapping("convert")
+	public MTransaction convert(@RequestBody TransactionDto transactDto) {
+		Integer card = transactDto.getCardNumber();
+		if(card == null) {
+			throw new CustomRunTimeException("Card Number cannot be null");
+		}
+		
+		MTransaction mtr = employeeService.convert(transactDto.getCardNumber(), transactDto.getAmountOfPoints(),transactDto.getPin(), transactDto.getVpa());
+		return mtr;
 	}
 	
 	

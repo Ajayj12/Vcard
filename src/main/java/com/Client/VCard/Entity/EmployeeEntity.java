@@ -2,6 +2,7 @@ package com.Client.VCard.Entity;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.Optional;
 
 import org.antlr.v4.runtime.misc.NotNull;
 
@@ -48,5 +49,11 @@ public class EmployeeEntity {
 	@JsonIgnore
 	@OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
 	private CardEntity card;
+	
+	@JsonIgnore
+	@OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
+	private BankDetails bankDetails;
+
+	
 
 }

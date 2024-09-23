@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.Client.VCard.Entity.CardEntity;
 import com.Client.VCard.Entity.CardStatus;
 import com.Client.VCard.Entity.EmployeeEntity;
+import com.Client.VCard.Entity.Limitpoints;
 import com.Client.VCard.Entity.Position;
 import com.Client.VCard.Exception.CustomIllegalArguementException;
 import com.Client.VCard.Exception.CustomRunTimeException;
@@ -52,15 +53,18 @@ public class CardService {
 		card.setCardNumber(emp.getAssociateId());
 
 		if (emp.getPosition() == Position.G1) {
-			card.setRewardLimits(4000);
+			card.setRewardLimits(Limitpoints.GOLD.getPts());
+			card.setBalance(Limitpoints.GOLD.getPts());
 			card.setCardType(cardCategoryRepo.getById(1));
 		} 
 		else if (emp.getPosition() == Position.G3) {
-			card.setRewardLimits(6000);
+			card.setRewardLimits(Limitpoints.DIAMOND.getPts());
+			card.setBalance(Limitpoints.DIAMOND.getPts());
 			card.setCardType(cardCategoryRepo.getById(2));
 		} 
 		else if (emp.getPosition() == Position.G4) {
-			card.setRewardLimits(8000);
+			card.setRewardLimits(Limitpoints.PLATINUM.getPts());
+			card.setBalance(Limitpoints.PLATINUM.getPts());
 			card.setCardType(cardCategoryRepo.getById(3));
 		}else {
 			throw new CustomIllegalArguementException("You're not Eligible");

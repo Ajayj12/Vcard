@@ -132,7 +132,7 @@ public class EmployeeService {
 			throw new CustomIllegalArguementException("Balance is less than half of the Limit");
 		}
 		
-		else if(dayOfMonth >= 1 && dayOfMonth <= 23){
+		else if(dayOfMonth >= 1 && dayOfMonth <= 25){
 			throw new CustomIllegalArguementException("Conversion is Only between 26th and 31st of Month ");
 		}
 		
@@ -182,6 +182,71 @@ public class EmployeeService {
 		
 
 	}
+	
+	
+	
+	
+	
+	public MTransaction Buy(Integer cardNumber, Integer amountOfPoints , int pin, String transactType) {
+		Optional<CardEntity> cardopt = cardRepo.findByCardNumber(cardNumber);
+		if(cardopt.isEmpty()) {
+			throw new CustomIllegalArguementException("Wrong Card Number");
+		}
+		Date Cd = new Date();
+		CardEntity card = cardopt.get();
+		MTransaction mtr = new MTransaction();
+		EmployeeEntity empOptional = card.getEmployee();
+		CardCategory ctype = card.getCardType();
+		
+		double finalWithdrawal = (amountOfPoints * ctype.getConversionRate());
+		
+		TransactionType transactionType;
+	    try {
+	        transactionType = TransactionType.valueOf(transactType.toUpperCase());
+	    } catch (IllegalArgumentException e) {
+	        throw new CustomIllegalArguementException("Invalid transaction type");
+	    }
+	    if (empOptional.getAssociateId() == null) {
+	        throw new CustomRunTimeException("associateId not found");
+	    }
+	    int associateId = empOptional.getAssociateId();
+	    
+	    if(card.getStatus() != CardStatus.ACTIVE){
+			throw new CustomIllegalArguementException("Not Eligible");
+		}
+		
+		else if(card.getBalance() <= amountOfPoints){
+			throw new CustomIllegalArguementException("Insufficient Balance");
+		}
+	    
+		else if(card.getPin() != pin) {
+			mtr.setTransactionType(transactionType);
+			mtr.setStatus(Status.FAILED);
+			mtr.setCost(finalWithdrawal);
+			mtr.setTransactionDate(Cd);
+			mtr.setCard(card);
+			transactRepo.save(mtr);
+			throw new CustomIllegalArguementException("Wrong PIN entered.");
+
+		}
+	    
+	    int pts = card.getBalance() - amountOfPoints;
+	    
+	    mtr.setTransactionType(transactionType);
+		mtr.setStatus(Status.SUCCESS);
+		card.setBalance(pts);
+		mtr.setCost(finalWithdrawal);
+		mtr.setTransactionDate(Cd);
+		mtr.setCard(card);
+		return transactRepo.save(mtr);
+	   
+
+	    
+		
+	}
+	
+	
+
 	
 	
 	

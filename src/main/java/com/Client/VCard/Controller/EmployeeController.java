@@ -76,5 +76,16 @@ public class EmployeeController {
 	}
 	
 	
+	@PostMapping("Buy")
+	public MTransaction Buy(@RequestBody TransactionDto transactDto) {
+		Integer card = transactDto.getCardNumber();
+		if(card == null) {
+			throw new CustomRunTimeException("Card Number cannot be null");
+		}
+		
+		MTransaction mtr = employeeService.Buy(transactDto.getCardNumber(), transactDto.getAmountOfPoints(), transactDto.getPin(), transactDto.getTransactType());
+		return mtr;
+	}
+	
 	
 }

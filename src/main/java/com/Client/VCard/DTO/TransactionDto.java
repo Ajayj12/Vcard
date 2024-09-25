@@ -10,4 +10,6 @@ public class TransactionDto {
 	private Integer amountOfPoints;
 	private Integer pin;
 	private String vpa;
+	
+	private String transactType;
 }

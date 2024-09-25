@@ -54,6 +54,9 @@ public class EmployeeEntity {
 	@OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
 	private BankDetails bankDetails;
 
+	@JsonIgnore
+	@OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
+	private PerfData perfData;
 	
 
 }

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Client.VCard.DTO.BankDetailsDto;
 import com.Client.VCard.DTO.CardDto;
 import com.Client.VCard.DTO.EmployeeDto;
 import com.Client.VCard.DTO.TransactionDto;
@@ -31,59 +32,59 @@ public class EmployeeController {
 	
 	
 	@PostMapping("newcard")
-	public CardEntity createCard(@RequestBody EmployeeDto employeeDTO) {
-		EmployeeEntity employee = employeeDTO.getEmployee();
-		if (employee.getAssociateId() == null) {
+	public CardDto createCard(@RequestBody EmployeeDto employee) {
+		
+		if (employee == null) {
 	        throw new CustomRunTimeException("Associate ID is required");
 	    }
-		CardEntity card = cardService.createCard(employeeDTO.getAssociateId());
+		CardDto card = cardService.createCard(employee);
 		return card;
 	}
 	
 	@PutMapping("pin")
-	public CardEntity setPinNumber(@RequestBody CardDto cardDto ) {
+	public CardDto setPinNumber(@RequestBody CardDto cardDto) {
 		Integer card = cardDto.getCardNumber();
 		if(card == null) {
 			throw new CustomRunTimeException("Card Number cannot be null");
 		}
-		return  employeeService.setPinNumber(cardDto.getCardNumber(), cardDto.getPinstring());
+		return  employeeService.setPinNumber(cardDto);
 		
 		 
 		
 	}
 	
 	@PostMapping("vpa")
-	public BankDetails setVpa(@RequestBody EmployeeDto employeeDTO) {
-		EmployeeEntity employee = employeeDTO.getEmployee();
-		if (employee.getAssociateId() == null) {
+	public BankDetailsDto setVpa(@RequestBody BankDetailsDto bankDTO) {
+		Integer emp = bankDTO.getAssociateId();
+		if (emp == null) {
 	        throw new CustomRunTimeException("Associate ID is required");
 	    }
-		BankDetails bank = employeeService.setVpa(employeeDTO.getAssociateId());
+		BankDetailsDto bank = employeeService.setVpa(bankDTO);
 		
 		return bank;
 		
 	}
 	
 	@PostMapping("convert")
-	public MTransaction convert(@RequestBody TransactionDto transactDto) {
+	public TransactionDto convert(@RequestBody TransactionDto transactDto) {
 		Integer card = transactDto.getCardNumber();
 		if(card == null) {
 			throw new CustomRunTimeException("Card Number cannot be null");
 		}
 		
-		MTransaction mtr = employeeService.convert(transactDto.getCardNumber(), transactDto.getAmountOfPoints(),transactDto.getPin(), transactDto.getVpa());
+		TransactionDto mtr = employeeService.convert(transactDto);
 		return mtr;
 	}
 	
 	
 	@PostMapping("Buy")
-	public MTransaction Buy(@RequestBody TransactionDto transactDto) {
+	public TransactionDto Buy(@RequestBody TransactionDto transactDto) {
 		Integer card = transactDto.getCardNumber();
 		if(card == null) {
 			throw new CustomRunTimeException("Card Number cannot be null");
 		}
 		
-		MTransaction mtr = employeeService.Buy(transactDto.getCardNumber(), transactDto.getAmountOfPoints(), transactDto.getPin(), transactDto.getTransactType());
+		TransactionDto mtr = employeeService.Buy(transactDto);
 		return mtr;
 	}
 	

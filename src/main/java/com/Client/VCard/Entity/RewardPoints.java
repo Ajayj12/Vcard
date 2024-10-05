@@ -33,7 +33,7 @@ public class RewardPoints {
 	private Date awardedDate;
 	
 	@ManyToOne
-	@JoinColumn(name = "card_id")
+	@JoinColumn(name = "card_number", referencedColumnName = "cardNumber")
 	@JsonIgnore
 	private CardEntity card;
 	

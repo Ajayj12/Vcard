@@ -5,11 +5,13 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -28,11 +30,12 @@ public class PerfData {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
-	
-	private Integer performance;
+	@Enumerated(EnumType.STRING)
+	private Performance performance;
 	
 	private Integer daysWorked;
-	@OneToOne
+	
+	@ManyToOne
 	@JoinColumn(name = "associate_id" ,referencedColumnName = "associateId")
 	private EmployeeEntity employee;
 

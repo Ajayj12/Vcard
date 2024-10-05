@@ -1,7 +1,5 @@
 package com.Client.VCard.DTO;
 
-import com.Client.VCard.Entity.Performance;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,8 +9,13 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PerfDataDto {
-	private Performance performance;
-    private Integer daysWorked;
-    private Integer associateId;
+public class CardCategoryDto {
+	private Integer id;
+	
+	private String category;
+	
+	private Double conversionRate;
+	
+	private Double pointMultiplier;
+
 }

@@ -1,6 +1,7 @@
 package com.Client.VCard.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -10,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.Client.VCard.DTO.CardDto;
 import com.Client.VCard.DTO.EmployeeDto;
+import com.Client.VCard.DTO.RewardPointsDto;
 import com.Client.VCard.Entity.CardEntity;
 import com.Client.VCard.Entity.EmployeeEntity;
 import com.Client.VCard.Entity.PerfData;
@@ -33,35 +36,39 @@ public class AdminController {
 	
 
 	@PutMapping("approve")
-	public CardEntity approveCard(@RequestBody EmployeeDto employeeDTO) {
-		EmployeeEntity employee = employeeDTO.getEmployee();
+	public CardDto approveCard(@RequestBody EmployeeDto employee) {
+		
 		if (employee == null) {
-	        throw new CustomRunTimeException("No Applicationfor this employee");
+	        throw new CustomRunTimeException("No Application for this employee");
 	    }
-		CardEntity card = cardService.approveCard(employee);
+		CardDto card = cardService.approveCard(employee);
 		return card;
 	}
 	
 	@PutMapping("reject")
-	public CardEntity rejectCard(@RequestBody EmployeeDto employeeDTO) {
-		EmployeeEntity employee = employeeDTO.getEmployee();
+	public CardDto rejectCard(@RequestBody EmployeeDto employee) {
 		if (employee == null) {
 	        throw new CustomRunTimeException("No Application for this employee");
 	    }
-		CardEntity card = cardService.rejectCard(employee);
+		CardDto card = cardService.rejectCard(employee);
 		return card;
 	}
 	
 	@Scheduled(cron = "0 0 0 1 * ?")
 	@PostMapping("send")
-	public RewardPoints monthlyRewards(){
+	public RewardPointsDto monthlyRewards(){
 		return cardService.monthlyRewards();
 		
 	}
 	
 	@PostMapping("mdata")
-	public PerfData MData(@RequestParam("file") MultipartFile file) throws Exception {
-		return cardService.MData(file);
-	}
+    public ResponseEntity<String> mdata(@RequestParam("file") MultipartFile file) throws Exception {
+        try {
+            cardService.mdata(file);
+            return ResponseEntity.ok("CSV file processed successfully.");
+        } catch (CustomRunTimeException e) {
+            return ResponseEntity.badRequest().body("Error processing file: " + e.getMessage());
+        }
+    }
 	
 }

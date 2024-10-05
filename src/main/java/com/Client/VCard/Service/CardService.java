@@ -1,16 +1,22 @@
 package com.Client.VCard.Service;
 
+import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.Client.VCard.DTO.CardDto;
+import com.Client.VCard.DTO.EmployeeDto;
 import com.Client.VCard.DTO.PerfDataDto;
+import com.Client.VCard.DTO.RewardPointsDto;
 import com.Client.VCard.Entity.CardEntity;
 import com.Client.VCard.Entity.CardStatus;
 import com.Client.VCard.Entity.EmployeeEntity;
@@ -27,6 +33,7 @@ import com.Client.VCard.Repository.EmployeeRepository;
 import com.Client.VCard.Repository.PerformanceRepository;
 import com.Client.VCard.Repository.RewardsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opencsv.CSVReader;
 
 import jakarta.transaction.Transactional;
 
@@ -45,21 +52,23 @@ public class CardService {
 
 	@Autowired
 	private RewardsRepository rewardPointsRepo;
-	
+	@Autowired
+	private ModelMapper modelMapper;
 	
 	
 
 	@Transactional
-	public CardEntity createCard(Integer associateId) {
+	public CardDto createCard(EmployeeDto employee) {
 
-		Optional<EmployeeEntity> empOptional = employeeRepo.findByAssociateId(associateId);
-		if (!empOptional.isPresent()) {
-			throw new CustomRunTimeException("Employee not found for associateId: " + associateId);
+		Optional<EmployeeEntity> empOptional = employeeRepo.findByAssociateId(employee.getAssociateId());
+		if (empOptional.isEmpty()) {
+			throw new CustomRunTimeException("Employee not found for associateId: " + employee.getAssociateId());
 		}
+		
 		EmployeeEntity emp = empOptional.get();
-
-		if (cardRepo.existsByEmployee(emp)) {
-			throw new CustomRunTimeException("Card already applied for associateId: " + associateId);
+		
+		if (cardRepo.existsByEmployee(emp)){
+			throw new CustomRunTimeException("Card already applied for associateId: " + emp.getAssociateId());
 		}
 
 		CardEntity card = new CardEntity();
@@ -85,20 +94,31 @@ public class CardService {
 		card.setDateOfCard(LocalDate.now());
 		card.setPin(1000);
 		card.setStatus(CardStatus.PENDING);
-
-		return cardRepo.save(card);
+		
+		
+	
+		return modelMapper.map(cardRepo.save(card), CardDto.class);
 
 	}
 
-	public CardEntity approveCard(EmployeeEntity employee) {
-		if (employee == null) {
-			throw new CustomIllegalArguementException("Employee cannot be null.");
+	public CardDto approveCard(EmployeeDto employeeDto) {
+		Optional<EmployeeEntity> empOptional = employeeRepo.findByAssociateId(employeeDto.getAssociateId());
+		if (empOptional.isEmpty()) {
+			throw new CustomRunTimeException("Employee not found for associateId: " + employeeDto.getAssociateId());
 		}
-
-		CardEntity card = cardRepo.findByEmployee_AssociateId(employee.getAssociateId());
+	
+		
+		
+		EmployeeEntity emp = empOptional.get();
+		
+		Optional<CardEntity> cardOpt = cardRepo.findByEmployee_AssociateId(emp.getAssociateId());
+		if (cardOpt.isEmpty()) {
+			throw new CustomRunTimeException("Card not found for associateId: " + employeeDto.getAssociateId());
+		}
+		CardEntity card = cardOpt.get();
 		LocalDate currentDate = LocalDate.now();
 
-		LocalDate doH = employee.getDateOfHire();
+		LocalDate doH = emp.getDateOfHire();
 
 		if (card == null) {
 			throw new CustomIllegalArguementException("Invalid card.");
@@ -110,26 +130,35 @@ public class CardService {
 
 		else if (doH != null && Period.between(doH, currentDate).getYears() < 1) {
 			card.setStatus(CardStatus.REJECTED);
-			cardRepo.save(card);
+			
+
+			modelMapper.map(cardRepo.save(card), CardDto.class);
 			throw new CustomIllegalArguementException(
 					"Card cannot be approved since employment under company is less than 1 year.");
 
 		}
-
+		card.setEmployee(emp);
 		card.setStatus(CardStatus.ACTIVE);
 
-		return cardRepo.save(card);
+		
+		return modelMapper.map(cardRepo.save(card), CardDto.class);
 
 	}
 
-	public CardEntity rejectCard(EmployeeEntity employee) {
-		if (employee == null) {
-			throw new IllegalArgumentException("Employee cannot be null.");
+	public CardDto rejectCard(EmployeeDto employee) {
+		Optional<EmployeeEntity> empOptional = employeeRepo.findByAssociateId(employee.getAssociateId());
+		if (empOptional.isEmpty()) {
+			throw new CustomRunTimeException("Employee not found for associateId: " + employee.getAssociateId());
 		}
-
-		CardEntity card = cardRepo.findByEmployee_AssociateId(employee.getAssociateId());
+		
+		EmployeeEntity emp = empOptional.get();
+		Optional<CardEntity> cardOpt = cardRepo.findByEmployee_AssociateId(emp.getAssociateId());
+		if (cardOpt.isEmpty()) {
+			throw new CustomRunTimeException("Card not found for associateId: " + employee.getAssociateId());
+		}
+		CardEntity card = cardOpt.get();
 		LocalDate currentDate = LocalDate.now();
-		LocalDate doH = employee.getDateOfHire();
+		LocalDate doH = emp.getDateOfHire();
 
 		if (card.getStatus() == CardStatus.REJECTED) {
 			throw new CustomIllegalArguementException("Card is already Rejected.");
@@ -137,7 +166,8 @@ public class CardService {
 
 		else if (card.getStatus() == CardStatus.ACTIVE) {
 			card.setStatus(CardStatus.PENDING);
-			cardRepo.save(card);
+			
+			modelMapper.map(cardRepo.save(card), CardDto.class);
 			throw new CustomIllegalArguementException("Card is Blocked Successfully.");
 
 		}
@@ -145,46 +175,45 @@ public class CardService {
 		else if (card.getStatus() != CardStatus.PENDING && card.getStatus() != CardStatus.REJECTED) {
 			throw new CustomIllegalArguementException("Card is already approved.");
 		}
-
+		card.setEmployee(emp);
 		card.setStatus(CardStatus.REJECTED);
 
-		return cardRepo.save(card);
+		return modelMapper.map(cardRepo.save(card), CardDto.class);
 
 	}
 
 	@Transactional
-	public RewardPoints monthlyRewards() {
+	public RewardPointsDto monthlyRewards() {
 		List<PerfData> allPerfData = perfRepo.findAll();
 		RewardPoints rew = new RewardPoints();
 		for(PerfData perfData : allPerfData) {
 			int daysWorked = perfData.getDaysWorked();
 			
-			EmployeeEntity employee = perfData.getEmployee();
+			EmployeeEntity emp = perfData.getEmployee();
 			
-			if(employee == null) {
-                new CustomIllegalArguementException("No employee");
+			if(emp == null) {
+                new CustomIllegalArguementException("No employee data");
 
 			}
-			int associateId = employee.getAssociateId();			
-			CardEntity card = cardRepo.findByEmployee_AssociateId(associateId);
+						
+			Optional<CardEntity> cardOpt = cardRepo.findByEmployee_AssociateId(emp.getAssociateId());
+			if (cardOpt.isEmpty()) {
+				throw new CustomRunTimeException("Card not found for associateId: " + emp.getAssociateId());
+			}
+			CardEntity card = cardOpt.get();
 			
 			if(card == null) {
                 new CustomIllegalArguementException("No card for employee");
 
 			}
 		
-			if(daysWorked >= 1 && daysWorked <= 15) {
-				perfData.setPerformance(Performance.A.getPerf());
-			}
 			
-			else if(daysWorked > 15) {
-				perfData.setPerformance(Performance.B.getPerf());
-			}
-			
-			double rewards = perfData.getPerformance() *  card.getCardType().getPointMultiplier(); 
+			double rewards = perfData.getPerformance().getPerf() *  card.getCardType().getPointMultiplier(); 
 			
 			card.setBalance(card.getBalance() + (int)rewards);
-			cardRepo.save(card);
+			modelMapper.map(cardRepo.save(card), CardDto.class);
+
+			
 			
 			Date currentDate = new Date();
 			
@@ -193,10 +222,11 @@ public class CardService {
 			rew.setAwardedDate(currentDate);
 			rew.setCard(card);
 			
-			rewardPointsRepo.save(rew);
+			modelMapper.map(rewardPointsRepo.save(rew), RewardPointsDto.class);
+		
 	
 		}
-		return rew;
+		return modelMapper.map(rewardPointsRepo.save(rew), RewardPointsDto.class);
 		
 	}
 	
@@ -204,27 +234,91 @@ public class CardService {
 	
 	
 	
-	public PerfData MData(MultipartFile file) throws Exception {
-		 ObjectMapper objectMapper = new ObjectMapper();
-		 List<PerfDataDto> perfDataList = objectMapper.readValue(file.getInputStream(),
-		            objectMapper.getTypeFactory().constructCollectionType(List.class, PerfDataDto.class));
-		 PerfData perf  = new PerfData();
-		 for(PerfDataDto pd : perfDataList) {
-			 Optional<EmployeeEntity> empOpt = employeeRepo.findByAssociateId(pd.getAssociateId());
-			 if(empOpt == null) {
-				 throw new CustomRunTimeException("Employee Not Found" + pd.getAssociateId());
-			 }
-			 else {
-				 EmployeeEntity employee = empOpt.get();
-				 perf = employee.getPerfData();
-				 perf.setDaysWorked(pd.getDaysWorked());
-				 perf.setPerformance(pd.getPerformance());
-				 perfRepo.save(perf);
-			 }
-		 }
-		 
-		 return perf;
-		
+	
+	public void mdata(MultipartFile file) throws Exception {
+	    try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
+	        reader.readNext(); // Skips the headers first line
+
+	        String[] line;
+	        while ((line = reader.readNext()) != null) {
+	            // Print the line for debugging purposes
+	            System.out.println("Processing line: " + Arrays.toString(line));
+
+	            // Check for blank lines
+	            if (line.length == 0 || Arrays.stream(line).allMatch(String::isEmpty)) {
+	                System.out.println("Skipping blank line: " + Arrays.toString(line));
+	                continue; // Skip blank lines
+	            }
+
+	            // Check if the line has enough columns
+	            if (line.length < 3) {
+	                System.out.println("Skipping line due to insufficient columns: " + Arrays.toString(line));
+	                continue; // Skip this iteration if there aren't enough columns
+	            }
+
+	            // Validate and parse associateId
+	            String associateIdStr = line[0].trim(); // Trim whitespace
+	            if (associateIdStr.isEmpty()) {
+	                System.out.println("Associate ID is empty. Skipping line: " + Arrays.toString(line));
+	                continue; // Skip this iteration if associateId is empty
+	            }
+	            Integer associateId = Integer.parseInt(associateIdStr);
+
+	            // Validate and parse daysWorked
+	            String daysWorkedStr = line[1].trim(); // Trim whitespace
+	            if (daysWorkedStr.isEmpty()) {
+	                System.out.println("Days Worked is empty. Skipping line: " + Arrays.toString(line));
+	                continue; // Skip this iteration if daysWorked is empty
+	            }
+	            Integer daysWorked = Integer.parseInt(daysWorkedStr);
+
+	            // Get performance and ensure it's valid
+	            String performanceStr = line[2].trim().toUpperCase(); // Trim whitespace
+	            if (performanceStr.isEmpty()) {
+	                System.out.println("Performance is empty. Skipping line: " + Arrays.toString(line));
+	                continue; // Skip this iteration if performance is empty
+	            }
+
+	            try {
+	                Performance performance = Performance.valueOf(performanceStr);
+	                Optional<EmployeeEntity> employeeOpt = employeeRepo.findByAssociateId(associateId);
+	                if (employeeOpt.isPresent()) {
+	                    EmployeeEntity employee = employeeOpt.get();
+	                    System.out.println("Found employee with ID: " + employee.getAssociateId());
+
+	                    PerfData perfData = employee.getPerfData();
+	                    if (perfData != null) {
+	                        perfData.setDaysWorked(daysWorked);
+	                        perfData.setPerformance(performance);
+	                        perfRepo.save(perfData);
+	                    } else {
+	                        PerfData perfDa = new PerfData();
+	                        perfDa.setEmployee(employee);
+	                        perfDa.setDaysWorked(daysWorked);
+	                        perfDa.setPerformance(performance);
+	                        perfRepo.save(perfDa);
+	                    }
+	                } else {
+	                    throw new CustomIllegalArguementException("Employee with associateId " + associateId + " not found.");
+	                }
+	            } catch (IllegalArgumentException e) {
+	                System.out.println("Invalid performance value: " + performanceStr + ". Skipping line: " + Arrays.toString(line));
+	                continue; // Skip this iteration if performance value is invalid
+	            }
+	        }
+	    }
 	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 }

@@ -40,7 +40,7 @@ public class MTransaction {
 	private Date transactionDate;
 	
 	@ManyToOne
-	@JoinColumn(name = "card_id")
+	@JoinColumn(name = "card_id" , referencedColumnName = "cardNumber" )
 	private CardEntity card;
 	
 	@JsonIgnore
